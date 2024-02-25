@@ -1,0 +1,72 @@
+---
+title: "Mod4Assign1 - MissingData"
+author: "Nikki Sinkler"
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+```{r}
+options(tidyverse.quiet = TRUE)
+library(titanic)
+library(tidyverse)
+library(tidymodels)
+library(mice) #package for imputation
+library(VIM) #visualizing missingness
+library(naniar) #visualizing missingness
+library(skimr) #alternative way to view dataset summaries
+library(UpSetR) #visualizing missingness
+```
+```{r}
+grades = read_csv("class-grades.csv")
+```
+```{r}
+str(grades)
+summary(grades)
+skim(grades)
+```
+
+#Task 1: For which variables is there missing data?
+Tutorial, Midterm,TakeHome,Final
+
+#Task 2: Use the VIM package to visualize missingness. 
+#Are there any students that are missing multiple pieces of data?
+YES
+```{r}
+gg_miss_upset(grades, nsets = 4) 
+```
+#Task 3: Use row-wise deletion of missing values to create a new data frame. 
+#How many rows remain in this data frame?
+89
+```{r}
+grades_rowdel = grades %>% drop_na() 
+skim(grades_rowdel)
+```
+#Task 4: Use column-wise deletion of missing values to create a new data frame from the original.
+#How many columns remain in this data frame?
+2
+
+```{r}
+grades_coldel = grades %>% select(-Tutorial, -Midterm, -TakeHome, -Final) 
+vim_plot = aggr(grades_coldel, numbers = TRUE, prop = c(TRUE, FALSE),cex.axis=.7)
+skim(grades_coldel)
+```
+
+#Task 5: Which approach (Task 3 or Task 4) seems preferable for this dataset? Briefly discuss your answer.
+I would choose the row deletion as it is more inclusive of the entire data set. Only 10 observations were removed with this method, but you still have all of the variables. Whereas the column deletion removing 4 variables, but maintaining the number of rows.The limits the predictors you can utilize.
+
+#Task 6 Use the “mice” package to impute the missing data in this dataset. Set “m = 5” and “method
+#=”pmm"" in the imputation. You MUST use a random number seed of 123 for this imputation. 
+#What is the mean value for the “Final” variable after imputation?
+68.33
+```{r}
+set.seed(123) #sets seed for random number generator
+imp_grades = mice(grades, m=5, method='pmm', printFlag=FALSE)
+#m is the number of imputations, 5 is a reasonable value as a default
+#pmm is "predictive mean matching" = imputation method for numeric data
+#printFlag reduces amount of output
+summary(imp_grades)
+```
+```{r}
+grades_complete = complete(imp_grades) 
+summary(grades_complete)
+```
